@@ -1,0 +1,107 @@
+<script setup lang="ts">
+import { Form, Head, setLayoutProps, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useLang } from '@/composables/useLang';
+import { edit } from '@/routes/profile';
+import { send } from '@/routes/verification';
+
+const page = usePage();
+const locale = (page.props as any).locale ?? 'en';
+const { t } = useLang();
+
+setLayoutProps({
+    layout: {
+        breadcrumbs: [
+            {
+                title: t('settings.profile.title', 'Profile settings'),
+                href: edit(locale),
+            },
+        ],
+    },
+});
+
+const user = computed(() => page.props.auth.user);
+</script>
+
+<template>
+    <Head :title="t('settings.profile.title', 'Profile settings')" />
+
+    <h1 class="sr-only">{{ t('settings.profile.title', 'Profile settings') }}</h1>
+
+    <div class="flex flex-col space-y-6">
+        <Heading
+            variant="small"
+            :title="t('settings.profile.heading', 'Profile')"
+            :description="t('settings.profile.description', 'Update your name and email address')"
+        />
+
+        <Form
+            v-bind="ProfileController.update.form()"
+            class="space-y-6"
+            v-slot="{ errors, processing }"
+        >
+            <div class="grid gap-2">
+                <Label for="name">{{ t('labels.name', 'Name') }}</Label>
+                <Input
+                    id="name"
+                    class="mt-1 block w-full"
+                    name="name"
+                    :default-value="user.name"
+                    required
+                    autocomplete="name"
+                    :placeholder="t('placeholders.full_name', 'Full name')"
+                />
+                <InputError class="mt-2" :message="errors.name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="email">{{ t('labels.email', 'Email address') }}</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    class="mt-1 block w-full"
+                    name="email"
+                    :default-value="user.email"
+                    required
+                    autocomplete="username"
+                    :placeholder="t('placeholders.email', 'Email address')"
+                />
+                <InputError class="mt-2" :message="errors.email" />
+            </div>
+
+            <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
+                <p class="-mt-4 text-sm text-muted-foreground">
+                    {{ t('labels.unverified_email', 'Your email address is unverified.') }}
+                    <Link
+                        :href="send(locale)"
+                        as="button"
+                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                    >
+                        {{ t('labels.resend_verification_email_link', 'Click here to re-send the verification email.') }}
+                    </Link>
+                </p>
+
+                <div
+                    v-if="page.props.status === 'verification-link-sent'"
+                    class="mt-2 text-sm font-medium text-green-600"
+                >
+                    {{ t('labels.verification_link_sent_message', 'A new verification link has been sent to your email address.') }}
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <Button :disabled="processing" data-test="update-profile-button"
+                    >{{ t('labels.save', 'Save') }}</Button
+                >
+            </div>
+        </Form>
+    </div>
+
+</template>
