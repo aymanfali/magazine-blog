@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid } from '@lucide/vue';
+import { Link } from '@inertiajs/vue3';
+import type { InertiaLinkProps } from '@inertiajs/vue3';
+import { LayoutGrid, LucideGroup } from '@lucide/vue';
+import type { LucideIcon } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -17,21 +19,45 @@ import {
 } from '@/components/ui/sidebar';
 import { useLang } from '@/composables/useLang';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import SidebarGroup from './ui/sidebar/SidebarGroup.vue';
+import SidebarGroupContent from './ui/sidebar/SidebarGroupContent.vue';
+import SidebarGroupLabel from './ui/sidebar/SidebarGroupLabel.vue';
 
-const page = usePage();
-const locale = computed(() => (page.props as any).locale ?? 'en');
-const { t } = useLang();
+const { t, locale } = useLang();
 
-const mainNavItems = computed<NavItem[]>(() => [
+type NavItem = {
+    title: string;
+    href: NonNullable<InertiaLinkProps['href']>;
+    icon?: LucideIcon;
+    isActive?: boolean;
+};
+
+type NavGroup = { label: string; items: NavItem[] };
+
+const mainNavGroups = computed<NavGroup[]>(() => [
     {
-        title: t('sidebar.dashboard', 'Dashboard'),
-        href: dashboard(),
-        icon: LayoutGrid,
+        label: t('dashboard.title'),
+        items: [
+            {
+                title: t('sidebar.dashboard', 'Dashboard'),
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+        ],
+    },
+    {
+        label: t('blog.title'),
+        items: [
+            {
+                title: t('categories.title', 'Categories'),
+                href: '/dashboard/categories',
+                icon: LucideGroup,
+            },
+        ],
     },
 ]);
 
-const footerNavItems: NavItem[] = [
+const footerNavItems = computed<NavItem[]>(() => [
     // {
     //     title: 'Repository',
     //     href: 'https://github.com/laravel/vue-starter-kit',
@@ -42,11 +68,15 @@ const footerNavItems: NavItem[] = [
     //     href: 'https://laravel.com/docs/starter-kits#vue',
     //     icon: BookOpen,
     // },
-];
+]);
+
+const sidebarSide = computed<'left' | 'right'>(() =>
+    locale.value === 'ar' ? 'right' : 'left',
+);
 </script>
 
 <template>
-    <Sidebar :side="locale === 'ar' ? 'right' : 'left'" collapsible="icon" variant="inset">
+    <Sidebar :side="sidebarSide" collapsible="icon" variant="inset">
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
@@ -60,7 +90,12 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <SidebarGroup v-for="group in mainNavGroups" :key="group.label">
+                <SidebarGroupLabel>{{ group.label }}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <NavMain :items="group.items" />
+                </SidebarGroupContent>
+            </SidebarGroup>
         </SidebarContent>
 
         <SidebarFooter>
