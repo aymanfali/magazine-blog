@@ -21,7 +21,7 @@ return [
         'active' => 'نشط',
         'inactive' => 'غير نشط',
         'confirm_delete' => 'تأكيد الحذف',
-        'delete_warning' => 'لا يمكن التراجع عن هذا الإجراء!',
+        'delete_warning' => 'سيتم نقل العنصر إلى سلة المحذوفات',
         'yes' => 'نعم',
         'no' => 'لا',
         'created_at' => 'تاريخ الإنشاء',

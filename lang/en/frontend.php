@@ -21,7 +21,7 @@ return [
         'active' => 'Active',
         'inactive' => 'Inactive',
         'confirm_delete' => 'Confirm Delete',
-        'delete_warning' => 'This action cannot be undone!',
+        'delete_warning' => 'The item will be moved to the trash!',
         'yes' => 'Yes',
         'no' => 'No',
         'created_at'=>'Created At',
