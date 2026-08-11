@@ -33,7 +33,9 @@ const permanentlyDelete = ref(false);
 watch(
     () => props.show,
     (val) => {
-        if (val) permanentlyDelete.value = false;
+        if (val) {
+            permanentlyDelete.value = false;
+        }
     },
 );
 
@@ -46,7 +48,7 @@ function confirm() {
 
 <template>
     <Dialog :open="show" @update:open="(val) => !val && emit('cancel')">
-        <DialogContent dir="ltr" class="sm:max-w-md">
+        <DialogContent class="sm:max-w-md">
             <DialogHeader>
                 <!-- Title changes based on context -->
                 <DialogTitle class="flex items-center gap-2">
@@ -60,7 +62,10 @@ function confirm() {
                     />
                     {{
                         isTrashed
-                            ? t('app.confirm_force_delete', 'Confirm Permanent Delete')
+                            ? t(
+                                  'app.confirm_force_delete',
+                                  'Confirm Permanent Delete',
+                              )
                             : t('app.confirm_delete', 'Confirm Delete')
                     }}
                 </DialogTitle>
@@ -68,13 +73,31 @@ function confirm() {
                 <!-- Description -->
                 <DialogDescription class="mt-1 space-y-1 text-sm">
                     <span v-if="isTrashed" class="font-medium text-destructive">
-                        {{ t('app.force_delete_warning', 'This item will be permanently deleted. This action cannot be undone!') }}
+                        {{
+                            t(
+                                'app.force_delete_warning',
+                                'This item will be permanently deleted. This action cannot be undone!',
+                            )
+                        }}
                     </span>
-                    <span v-else-if="permanentlyDelete" class="font-medium text-destructive">
-                        {{ t('app.force_delete_warning', 'This item will be permanently deleted. This action cannot be undone!') }}
+                    <span
+                        v-else-if="permanentlyDelete"
+                        class="font-medium text-destructive"
+                    >
+                        {{
+                            t(
+                                'app.force_delete_warning',
+                                'This item will be permanently deleted. This action cannot be undone!',
+                            )
+                        }}
                     </span>
                     <span v-else>
-                        {{ t('app.delete_warning', 'This action cannot be undone!') }}
+                        {{
+                            t(
+                                'app.delete_warning',
+                                'This action cannot be undone!',
+                            )
+                        }}
                     </span>
                 </DialogDescription>
             </DialogHeader>
@@ -93,12 +116,17 @@ function confirm() {
                 <div class="flex flex-col gap-0.5">
                     <label
                         for="permanently-delete-checkbox"
-                        class="cursor-pointer text-sm font-medium leading-none"
+                        class="cursor-pointer text-sm leading-none font-medium"
                     >
                         {{ t('app.delete_permanently', 'Delete Permanently') }}
                     </label>
                     <span class="text-xs text-muted-foreground">
-                        {{ t('app.force_delete_warning', 'This item will be permanently deleted and cannot be recovered.') }}
+                        {{
+                            t(
+                                'app.force_delete_warning',
+                                'This item will be permanently deleted and cannot be recovered.',
+                            )
+                        }}
                     </span>
                 </div>
             </div>
@@ -110,13 +138,22 @@ function confirm() {
             >
                 <AlertTriangle class="h-4 w-4 shrink-0 text-destructive" />
                 <span class="text-xs text-destructive">
-                    {{ t('app.trashed_permanent_note', 'This item is already in the trash. Deleting it here will remove it forever.') }}
+                    {{
+                        t(
+                            'app.trashed_permanent_note',
+                            'This item is already in the trash. Deleting it here will remove it forever.',
+                        )
+                    }}
                 </span>
             </div>
 
             <DialogFooter class="flex gap-2 sm:justify-end">
                 <Button
-                    :variant="isTrashed || permanentlyDelete ? 'destructive' : 'destructive'"
+                    :variant="
+                        isTrashed || permanentlyDelete
+                            ? 'destructive'
+                            : 'destructive'
+                    "
                     @click="confirm"
                 >
                     {{ t('app.yes', 'Yes') }}

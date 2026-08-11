@@ -23,7 +23,7 @@ const emit = defineEmits(['confirm', 'cancel']);
 
 <template>
     <Dialog :open="show" @update:open="(val) => !val && emit('cancel')">
-        <DialogContent dir="ltr" class="sm:max-w-md">
+        <DialogContent class="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2">
                     <RotateCcw class="h-5 w-5 text-green-600 dark:text-green-400" />
