@@ -2,22 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use App\Services\CategoryService;
 use App\Services\QueryBuilder\QueryBuilder;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        protected CategoryService $categoryService
+    ) {}
+
     public function index(): Response
     {
         $config = [
             'select' => [
                 'id',
+                'image',
                 'name',
                 'slug',
                 'is_active',
@@ -37,6 +41,9 @@ class CategoryController extends Controller
 
             'filters' => [
                 'name' => 'like',
+
+                'parent_id' => 'equals',
+
                 'is_active' => 'boolean',
 
                 'created_at' => [
@@ -53,16 +60,11 @@ class CategoryController extends Controller
                     'from' => 'deleted_from',
                     'to' => 'deleted_to',
                 ],
-
-                'parent' => [
-                    'relation' => 'parent',
-                    'column' => 'id',
-                    'operator' => '=',
-                ],
             ],
 
             'sort' => [
                 'name',
+                'parent_name',
                 'is_active',
                 'created_at',
                 'updated_at',
@@ -74,9 +76,9 @@ class CategoryController extends Controller
         $query = Category::query();
 
         if (request()->boolean('only_trashed')) {
-            $query = $query->onlyTrashed();
+            $query->onlyTrashed();
         } elseif (request()->boolean('with_trashed')) {
-            $query = $query->withTrashed();
+            $query->withTrashed();
         }
 
         $builder = QueryBuilder::for($query)
@@ -88,26 +90,31 @@ class CategoryController extends Controller
             ? $builder->paginate($perPage)
             : $builder->apply()->get();
 
-            return Inertia::render('categories/Index', [
+        $parentCategories = Category::query()
+            ->whereHas('children')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('categories/Index', [
             'categories' => $categories,
+            'parentCategories' => $parentCategories,
 
             'filters' => request()->all([
                 'search',
                 'name',
+                'parent_id',
                 'is_active',
+
                 'created_from',
                 'created_to',
-                'created_at_start',
-                'created_at_end',
+
                 'updated_from',
                 'updated_to',
-                'updated_at_start',
-                'updated_at_end',
+
                 'deleted_from',
                 'deleted_to',
-                'deleted_at_start',
-                'deleted_at_end',
-                'parent',
+
                 'only_trashed',
                 'with_trashed',
             ]),
@@ -124,130 +131,88 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function show(Request $request, int $id): Response
+    public function show(Category $category): Response
     {
-        $query = $request->boolean('with_trashed')
-            ? Category::withTrashed()
-            : Category::query();
+        $category->load([
+            'parent',
+            'children',
+        ]);
 
-        $category = $query->with(['parent', 'children'])->findOrFail($id);
-
-        return Inertia::render('Category/Show', [
+        return Inertia::render('categories/Show', [
             'category' => $category,
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(CategoryRequest $request): RedirectResponse
     {
-        $data = $this->validateCategory($request);
-
-        $data['slug'] = $this->buildSlug($data);
-        $data['uuid'] = Str::uuid()->toString();
-
-        if ($request->user() !== null && ! array_key_exists('user_id', $data)) {
-            $data['user_id'] = $request->user()->id;
-        }
-
-        $category = Category::create($data);
+        $category = $this->categoryService->create(
+            $request->validated(),
+            $request->user()?->id
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Category created.'),
         ]);
 
-        return to_route('categories.show', $category);
+        return to_route(
+            'categories.show',
+            $category
+        );
     }
 
-    public function update(Request $request, Category $category): RedirectResponse
-    {
-        $data = $this->validateCategory($request, $category);
-
-        $data['slug'] = $this->buildSlug($data, $category);
-
-        $category->update($data);
+    public function update(
+        CategoryRequest $request,
+        Category $category
+    ): RedirectResponse {
+        $category = $this->categoryService->update(
+            $category,
+            $request->validated()
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Category updated.'),
         ]);
 
-        return to_route('categories.show', $category);
+        return to_route(
+            'categories.show',
+            $category
+        );
     }
 
-    public function destroy(int $id): RedirectResponse
+    public function destroy(Category $category): RedirectResponse
     {
-        $category = Category::withTrashed()->findOrFail($id);
-
         if (request()->boolean('force')) {
-            $category->forceDelete();
+            $this->categoryService->forceDelete($category);
 
             Inertia::flash('toast', [
                 'type' => 'success',
                 'message' => __('Category permanently deleted.'),
             ]);
 
-            return redirect()->back();
+            return back();
         }
 
-        $category->delete();
+        $this->categoryService->delete($category);
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Category deleted.'),
         ]);
 
-        return redirect()->back();
+        return back();
     }
 
-    public function restore(int $id): RedirectResponse
+    public function restore(Category $category): RedirectResponse
     {
-        $category = Category::withTrashed()->findOrFail($id);
-        $category->restore();
+        $this->categoryService->restore($category);
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Category restored.'),
         ]);
 
-        return redirect()->back();
-    }
-
-    protected function validateCategory(Request $request, ?Category $category = null): array
-    {
-        $ignoreId = $category?->id;
-
-        $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', Rule::unique('categories')->ignore($ignoreId)],
-            'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['sometimes', 'boolean'],
-            'parent_id' => ['nullable', 'exists:categories,id'],
-        ];
-
-        if ($category !== null) {
-            $rules['parent_id'][] = Rule::notIn([$category->id]);
-        }
-
-        return $request->validate($rules);
-    }
-
-    protected function buildSlug(array $data, ?Category $category = null): string
-    {
-        $slug = isset($data['slug']) && trim($data['slug']) !== ''
-            ? Str::slug($data['slug'])
-            : Str::slug($data['name']);
-
-        $original = $slug;
-        $counter = 1;
-
-        while (Category::where('slug', $slug)
-            ->when($category, fn($query) => $query->where('id', '<>', $category->id))
-            ->exists()
-        ) {
-            $slug = $original . '-' . $counter++;
-        }
-
-        return $slug;
+        return back();
     }
 }

@@ -5,13 +5,26 @@ import {
     ArrowUpAz,
     ChevronLeft,
     ChevronRight,
+    Eye,
     RotateCcw,
+    Search,
+    Trash2,
 } from '@lucide/vue';
 import { useDebounceFn } from '@vueuse/core';
 
 import { computed, onMounted, ref, watch } from 'vue';
+import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue';
 import RestoreConfirmModal from '@/components/modals/RestoreConfirmModal.vue';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { useLang } from '@/composables/useLang';
+import { useDateFormatter } from '@/utils/date';
 import BaseImage from '../images/BaseImage.vue';
 import Button from '../ui/button/Button.vue';
 import DropdownMenu from '../ui/dropdown-menu/DropdownMenu.vue';
@@ -29,17 +42,7 @@ import SelectContent from '../ui/select/SelectContent.vue';
 import SelectItem from '../ui/select/SelectItem.vue';
 import SelectTrigger from '../ui/select/SelectTrigger.vue';
 import SelectValue from '../ui/select/SelectValue.vue';
-
-import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { useDateFormatter } from '@/utils/date';
+import SelectLabel from '../ui/select/SelectLabel.vue';
 
 const { t, locale } = useLang();
 const isRTL = computed(() => {
@@ -711,14 +714,7 @@ function resolveValue(item: any, col: any) {
     >
         <div class="my-4 flex items-center justify-between px-4">
             <div class="flex items-center gap-2">
-                <Input
-                    v-model="search"
-                    type="text"
-                    :placeholder="t('app.search', 'Search...')"
-                    :class="[
-                        'rounded-lg border bg-accent px-3 py-1 text-sm outline-none',
-                    ]"
-                />
+                <Eye />
                 <Select
                     v-if="enableSoftDeletes"
                     :model-value="trashedState"
@@ -736,13 +732,27 @@ function resolveValue(item: any, col: any) {
                             {{ t('app.without_trashed', 'Active Items') }}
                         </SelectItem>
                         <SelectItem value="only">
-                            <span class="text-red-500">{{ t('app.only_trashed', 'Only Trashed') }}</span>
+                            <span class="text-red-500">{{
+                                t('app.only_trashed', 'Only Trashed')
+                            }}</span>
                         </SelectItem>
                         <SelectItem value="with">
                             {{ t('app.with_trashed', 'With Trashed') }}
                         </SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+
+            <div class="flex gap-2 items-center">
+                <Search/>
+                <Input
+                    v-model="search"
+                    type="text"
+                    :placeholder="t('app.search', 'Search...')"
+                    :class="[
+                        'rounded-lg border bg-accent px-3 py-1 text-sm outline-none',
+                    ]"
+                />
                 <Button variant="ghost" @click="resetFilters">
                     <RotateCcw />
                 </Button>
@@ -959,29 +969,33 @@ function resolveValue(item: any, col: any) {
                         <TableCell v-for="col in columns" :key="col.key">
                             <slot :name="`cell-${col.key}`" :item="item">
                                 <template v-if="col.type === 'image'">
-                                    <BaseImage
-                                        v-if="item[col.key]"
-                                        :src="item[col.key]"
-                                        :alt="col.alt || col.key"
-                                        class="h-10 w-16 rounded-md object-cover"
-                                    />
                                     <div
-                                        v-else
-                                        class="flex h-10 w-16 items-center justify-center rounded-md bg-accent"
+                                        class="flex items-center justify-center"
                                     >
-                                        <svg
-                                            class="h-5 w-5 text-gray-400"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                        <BaseImage
+                                            v-if="item[col.key]"
+                                            :src="item[col.key]"
+                                            :alt="col.alt || col.key"
+                                            class="h-10 w-16 rounded-md object-cover"
+                                        />
+                                        <div
+                                            v-else
+                                            class="flex h-10 w-16 items-center justify-center rounded-md bg-accent"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                            />
-                                        </svg>
+                                            <svg
+                                                class="h-5 w-5 text-gray-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </template>
 

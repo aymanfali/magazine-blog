@@ -3,24 +3,49 @@ import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { CheckCircle, CircleX, Edit2, RotateCcw, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
-import Modal from '@/components/modals/Modal.vue';
 import AdminTable from '@/components/tables/AdminTable.vue';
+import Button from '@/components/ui/button/Button.vue';
+
 import { useLang } from '@/composables/useLang';
 import { dashboard } from '@/routes';
 
-const { t, locale } = useLang();
+import CreateCategoryDialog from './CreateCategoryDialog.vue';
 
-function withLocale(path: string) {
-    if (path.startsWith('/') && !/^\/(en|ar)(\/|$)/.test(path)) {
-        return `/${locale.value}${path}`;
-    }
-
-    return path;
+interface ParentCategory {
+    id: string;
+    name: string;
 }
 
-defineProps<{
+interface Props {
     categories: any;
-}>();
+    parentCategories?: ParentCategory[];
+}
+
+const props = defineProps<Props>();
+
+const { t, locale } = useLang();
+
+/*
+|--------------------------------------------------------------------------
+| Locale
+|--------------------------------------------------------------------------
+*/
+
+function withLocale(path: string): string {
+    const prefix = `/${locale.value}`;
+
+    if (path === prefix || path.startsWith(`${prefix}/`)) {
+        return path;
+    }
+
+    return `${prefix}${path}`;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Layout
+|--------------------------------------------------------------------------
+*/
 
 setLayoutProps({
     breadcrumbs: [
@@ -30,18 +55,48 @@ setLayoutProps({
         },
         {
             title: t('categories.title', 'Categories'),
-            href: '/categories',
+            href: withLocale('/dashboard/categories'),
         },
     ],
 });
 
-/* -----------------------------
-   COLUMNS
------------------------------ */
+/*
+|--------------------------------------------------------------------------
+| Create Category
+|--------------------------------------------------------------------------
+*/
+
+const showCreateModal = ref(false);
+
+/*
+|--------------------------------------------------------------------------
+| Table Columns
+|--------------------------------------------------------------------------
+*/
+
+const parentCategoryOptions = computed(() =>
+    Object.fromEntries(
+        (props.parentCategories ?? []).map((category) => [
+            String(category.id),
+            {
+                label: category.name,
+            },
+        ]),
+    ),
+);
+
 const columns = computed(() => [
     {
+        key: 'image_url',
+        type: 'image',
+        label: t('categories.image', 'Image'),
+        sortable: false,
+        filterable: false,
+    },
+
+    {
         key: 'name',
-        label: t('categories.title'),
+        label: t('categories.name', 'Name'),
         sortable: true,
         filterable: true,
         filterType: 'text',
@@ -49,162 +104,238 @@ const columns = computed(() => [
         searchable: true,
     },
     {
+        key: 'parent_name',
+        label: t('categories.parent_category', 'Parent'),
+        sortable: true,
+        filterable: true,
+        filterType: 'select',
+        filterKey: 'parent_id',
+        searchable: true,
+        options: parentCategoryOptions.value,
+    },
+
+    {
         key: 'is_active',
-        label: t('app.active'),
+        label: t('app.active', 'Active'),
         type: 'badge',
         filterable: true,
         sortable: true,
         filterType: 'select',
+        filterKey: 'is_active',
+
         options: {
             '1': {
-                label: t('app.active'),
+                label: t('app.active', 'Active'),
                 color: 'green',
                 icon: CheckCircle,
             },
+
             '0': {
-                label: t('app.inactive'),
+                label: t('app.inactive', 'Inactive'),
                 color: 'red',
                 icon: CircleX,
             },
         },
-        filterKey: 'is_active',
     },
+
     {
         key: 'created_at',
-        label: t('app.created_at'),
+        label: t('app.created_at', 'Created At'),
         searchable: true,
         sortable: true,
         filterable: true,
         filterType: 'date-range',
     },
+
     {
         key: 'updated_at',
-        label: t('app.updated_at'),
+        label: t('app.updated_at', 'Updated At'),
         sortable: true,
         filterable: true,
         filterType: 'date-range',
     },
+
     {
         key: 'deleted_at',
-        label: t('app.deleted_at'),
+        label: t('app.deleted_at', 'Deleted At'),
         sortable: true,
         filterable: true,
         filterType: 'date-range',
     },
 ]);
 
-/* -----------------------------
-   ACTIONS
------------------------------ */
-
-const showModal = ref(false);
-const modalLink = ref('');
-
-async function copyModalLink() {
-    try {
-        await (globalThis.navigator as any)?.clipboard?.writeText(
-            modalLink.value,
-        );
-    } catch {
-        (globalThis.window as any)?.prompt('Copy link', modalLink.value);
-    }
-}
+/*
+|--------------------------------------------------------------------------
+| Table Actions
+|--------------------------------------------------------------------------
+*/
 
 const actions = computed(() => [
+    /*
+     * Edit
+     */
     {
         key: 'edit',
-        label: t('app.edit'),
+
+        label: t('app.edit', 'Edit'),
+
         icon: Edit2,
+
         variant: 'default',
+
         visible: (item: any) => !item.deleted_at,
+
         handler: ({ item }: any) => {
-            router.visit(`/dashboard/categories/${item.id}/edit`);
+            router.visit(withLocale(`/dashboard/categories/${item.id}/edit`));
         },
     },
+
+    /*
+     * Soft Delete
+     */
     {
         key: 'delete',
-        label: t('app.delete'),
+
+        label: t('app.delete', 'Delete'),
+
         icon: Trash2,
+
         variant: 'destructive',
+
         visible: (item: any) => !item.deleted_at,
+
         handler: ({ item, openDelete }: any) => {
             openDelete(item);
         },
     },
+
+    /*
+     * Restore
+     */
     {
         key: 'restore',
+
         label: t('app.restore', 'Restore'),
+
         icon: RotateCcw,
+
         variant: 'outline',
+
         visible: (item: any) => !!item.deleted_at,
+
         handler: ({ item, openRestore }: any) => {
             openRestore(item);
         },
     },
+
+    /*
+     * Permanent Delete
+     */
     {
         key: 'force_delete',
+
         label: t('app.delete_permanently', 'Delete Permanently'),
+
         icon: Trash2,
+
         variant: 'destructive',
+
         visible: (item: any) => !!item.deleted_at,
+
         handler: ({ item, openDelete }: any) => {
             openDelete(item);
         },
     },
 ]);
 
-const handleDelete = ({ item, force }: { item: any; force: boolean }) => {
-    const path = (item.deleted_at || force)
-        ? `/dashboard/categories/${item.id}?force=1`
-        : `/dashboard/categories/${item.id}`;
+/*
+|--------------------------------------------------------------------------
+| Delete
+|--------------------------------------------------------------------------
+*/
 
-    router.delete(withLocale(path), {
+const handleDelete = ({ item, force }: { item: any; force: boolean }) => {
+    const basePath = `/dashboard/categories/${item.id}`;
+
+    /*
+     * If the category is already trashed, or the table
+     * explicitly requested force deletion, permanently delete it.
+     */
+    if (force || item.deleted_at) {
+        router.delete(withLocale(`${basePath}?force=1`), {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                // Optional: AdminTable/Inertia will refresh the data.
+            },
+        });
+
+        return;
+    }
+
+    /*
+     * Normal deletion = soft delete.
+     */
+    router.delete(withLocale(basePath), {
         preserveScroll: true,
+
+        onSuccess: () => {
+            // Optional: AdminTable/Inertia will refresh the data.
+        },
     });
 };
+
+/*
+|--------------------------------------------------------------------------
+| Restore
+|--------------------------------------------------------------------------
+*/
 
 const handleRestore = (item: any) => {
     router.post(
         withLocale(`/dashboard/categories/${item.id}/restore`),
         {},
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+        },
     );
 };
 </script>
 
 <template>
     <div>
-        <Head :title="t('categories.title')" />
+        <!-- Page title -->
+        <Head :title="t('categories.title', 'Categories')" />
 
-        <div class="mx-auto my-3 flex items-center justify-between">
+        <!-- Header -->
+        <div class="m-3 flex items-center justify-between">
             <h1 class="text-2xl font-bold">
-                {{ t('categories.title') }}
+                {{ t('categories.title', 'Categories') }}
             </h1>
 
-            <div class=""></div>
+            <Button type="button" @click="showCreateModal = true">
+                {{ t('app.create', 'Create') }}
+            </Button>
         </div>
 
+        <!-- Categories Table -->
         <AdminTable
-            tableKey="categories-table"
-            :title="t('categories.title')"
+            table-key="categories-table"
+            :title="t('categories.title', 'Categories')"
             :columns="columns"
             :data="categories"
-            endpoint="/dashboard/categories"
+            :endpoint="withLocale('/dashboard/categories')"
             :actions="actions"
             :enable-soft-deletes="true"
             @delete="handleDelete"
             @restore="handleRestore"
-        >
-        </AdminTable>
-        <Modal
-            :show="showModal"
-            title="Generated public link"
-            @close="showModal = false"
-        >
-            <div class="wrap-break-word">{{ modalLink }}</div>
-            <div class="mt-4">
-                <button class="btn" @click="copyModalLink">Copy link</button>
-            </div>
-        </Modal>
+        />
+
+        <!-- Create Category Dialog -->
+        <CreateCategoryDialog
+            v-model:open="showCreateModal"
+            :parent-categories="props.parentCategories ?? []"
+            :endpoint="withLocale('/dashboard/categories')"
+        />
     </div>
 </template>

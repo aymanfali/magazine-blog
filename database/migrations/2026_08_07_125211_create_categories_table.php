@@ -12,21 +12,60 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->uuid('uuid')->unique();
+            $table->uuid('id')->primary();
+
+            $table->uuid('user_id')->nullable();
+
             $table->string('name');
             $table->string('slug')->unique();
+
             $table->text('description')->nullable();
+
             $table->string('image')->nullable();
+
             $table->boolean('is_active')->default(true);
-            $table->foreignId('parent_id')->nullable()->constrained('categories')->nullOnDelete();
+
+            $table->uuid('parent_id')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
+
+            /*
+    |--------------------------------------------------------------------------
+    | Foreign Keys
+    |--------------------------------------------------------------------------
+    */
+
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->nullOnDelete();
+
+            $table->foreign('parent_id')
+                ->references('id')
+                ->on('categories')
+                ->nullOnDelete();
+
+            /*
+    |--------------------------------------------------------------------------
+    | Indexes
+    |--------------------------------------------------------------------------
+    */
 
             $table->index('parent_id');
             $table->index('is_active');
             $table->index('user_id');
-            $table->unique(['name', 'parent_id']);
+
+            /*
+    |--------------------------------------------------------------------------
+    | Constraints
+    |--------------------------------------------------------------------------
+    */
+
+            $table->unique([
+                'name',
+                'parent_id',
+            ]);
         });
     }
 
