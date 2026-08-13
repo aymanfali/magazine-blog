@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Edit, Fullscreen, Info } from '@lucide/vue';
+import { Edit, Info } from '@lucide/vue';
 import { computed } from 'vue';
+import Button from '@/components/ui/button/Button.vue';
 
 import {
     Dialog,
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 
 import Label from '@/components/ui/label/Label.vue';
-import Button from '@/components/ui/button/Button.vue';
 
 import { useLang } from '@/composables/useLang';
 

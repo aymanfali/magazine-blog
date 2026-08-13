@@ -16,13 +16,14 @@ class CategoryController extends Controller
         protected CategoryService $categoryService
     ) {}
 
-    public function index(): Response
+    public function index(Category $category): Response
     {
         $config = [
             'select' => [
                 'id',
                 'image',
                 'name',
+                'description',
                 'slug',
                 'is_active',
                 'parent_id',
@@ -91,9 +92,7 @@ class CategoryController extends Controller
             : $builder->apply()->get();
 
         $parentCategories = Category::query()
-            ->whereHas('children')
             ->where('is_active', true)
-            ->orderBy('name')
             ->get(['id', 'name']);
 
         return Inertia::render('categories/Index', [
@@ -181,17 +180,20 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-
         $category->load([
             'parent',
             'children',
         ]);
 
         $parentCategories = Category::query()
-            ->whereHas('children')
-            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->when(
+                $category,
+                fn($query) => $query->whereKeyNot($category->getKey())
+            )
+            ->select(['id', 'name'])
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         return Inertia::render('categories/Edit', [
             'category' => $category,

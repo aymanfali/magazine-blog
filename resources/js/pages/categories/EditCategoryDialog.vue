@@ -8,6 +8,7 @@ import FormInput from '@/components/inputs/FormInput.vue';
 import FormTextarea from '@/components/inputs/FormTextarea.vue';
 import ImageInput from '@/components/inputs/ImageInput.vue';
 
+import Button from '@/components/ui/button/Button.vue';
 import {
     Dialog,
     DialogContent,
@@ -26,10 +27,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
+import { useLang } from '@/composables/useLang';
+import { slugifyPreview } from '@/utils';
 import Switch from '@/components/ui/switch/Switch.vue';
 
-import { useLang } from '@/composables/useLang';
-import Button from '@/components/ui/button/Button.vue';
 
 /*
 |--------------------------------------------------------------------------
@@ -288,18 +289,6 @@ watch(showModal, (value) => {
 |--------------------------------------------------------------------------
 */
 
-const slugifyPreview = (value: string): string => {
-    return value
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-};
-
 const slugPreview = computed(() => {
     const value = form.slug.trim();
 
@@ -379,6 +368,7 @@ const resetForm = () => {
 
     form.clearErrors();
 };
+
 </script>
 
 <template>

@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/select';
 
 import { useLang } from '@/composables/useLang';
-import Switch from '@/components/ui/switch/Switch.vue';
 import { dashboard } from '@/routes';
-import { withLocale } from '@/utils';
+import { slugifyPreview, withLocale } from '@/utils';
+import Switch from '@/components/ui/switch/Switch.vue';
 
 
 const ROOT_VALUE = '__root__';
@@ -101,24 +101,6 @@ const selectedParentValue = computed(() => {
 
 const handleParentChange = (value: string) => {
     form.parent_id = value === ROOT_VALUE ? null : value;
-};
-
-/*
-|--------------------------------------------------------------------------
-| Slug
-|--------------------------------------------------------------------------
-*/
-
-const slugifyPreview = (value: string): string => {
-    return value
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
 };
 
 const slugPreview = computed(() => {

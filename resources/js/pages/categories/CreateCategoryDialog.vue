@@ -7,6 +7,7 @@ import AppForm from '@/components/forms/AppForm.vue';
 import FormInput from '@/components/inputs/FormInput.vue';
 import FormTextarea from '@/components/inputs/FormTextarea.vue';
 import ImageInput from '@/components/inputs/ImageInput.vue';
+import Button from '@/components/ui/button/Button.vue';
 
 import {
     Dialog,
@@ -27,8 +28,8 @@ import {
 import { useLang } from '@/composables/useLang';
 
 
+import { slugifyPreview } from '@/utils';
 import Switch from '@/components/ui/switch/Switch.vue';
-import Button from '@/components/ui/button/Button.vue';
 
 interface ParentCategory {
     id: number | string;
@@ -100,18 +101,6 @@ watch(showModal, (value) => {
  * This is NOT the actual slug generation logic.
  * It only gives the user an indication of how the URL will look.
  */
-
-const slugifyPreview = (value: string): string => {
-    return value
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-};
 
 const slugPreview = computed(() => {
     const customSlug = form.slug.trim();

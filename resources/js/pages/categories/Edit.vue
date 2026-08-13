@@ -7,9 +7,8 @@ import AppForm from '@/components/forms/AppForm.vue';
 import FormInput from '@/components/inputs/FormInput.vue';
 import FormTextarea from '@/components/inputs/FormTextarea.vue';
 import ImageInput from '@/components/inputs/ImageInput.vue';
-
+import Button from '@/components/ui/button/Button.vue';
 import Label from '@/components/ui/label/Label.vue';
-
 import {
     Select,
     SelectContent,
@@ -17,27 +16,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-
-import Switch from '@/components/ui/switch/Switch.vue';
-import Button from '@/components/ui/button/Button.vue';
-
 import { useLang } from '@/composables/useLang';
 import { dashboard } from '@/routes';
-import { withLocale } from '@/utils';
-
-/*
-|--------------------------------------------------------------------------
-| Constants
-|--------------------------------------------------------------------------
-*/
+import { slugifyPreview, withLocale } from '@/utils';
+import Switch from '@/components/ui/switch/Switch.vue';
 
 const ROOT_VALUE = '__root__';
-
-/*
-|--------------------------------------------------------------------------
-| Types
-|--------------------------------------------------------------------------
-*/
 
 interface ParentCategory {
     id: number | string;
@@ -59,12 +43,6 @@ interface Props {
     parentCategories: ParentCategory[];
     category?: Category | null;
 }
-
-/*
-|--------------------------------------------------------------------------
-| Props
-|--------------------------------------------------------------------------
-*/
 
 const props = defineProps<Props>();
 
@@ -121,12 +99,6 @@ const processingText = computed(() =>
         : t('app.creating', 'Creating...'),
 );
 
-/*
-|--------------------------------------------------------------------------
-| Form
-|--------------------------------------------------------------------------
-*/
-
 const form = useForm({
     name: props.category?.name ?? '',
     slug: props.category?.slug ?? '',
@@ -141,24 +113,9 @@ const form = useForm({
             : (null as string | null),
 });
 
-/*
-|--------------------------------------------------------------------------
-| Existing Image
-|--------------------------------------------------------------------------
-*/
-
 const existingImage = ref<string | null>(
     props.category?.image_url ?? props.category?.image ?? null,
 );
-
-/*
-|--------------------------------------------------------------------------
-| Parent Categories
-|--------------------------------------------------------------------------
-|
-| Prevent the current category from becoming its own parent.
-|--------------------------------------------------------------------------
-*/
 
 const availableParentCategories = computed(() => {
     const currentId = props.category?.id;
@@ -172,36 +129,12 @@ const availableParentCategories = computed(() => {
     );
 });
 
-/*
-|--------------------------------------------------------------------------
-| Parent Category Select
-|--------------------------------------------------------------------------
-*/
-
 const selectedParentValue = computed(() => {
     return form.parent_id ?? ROOT_VALUE;
 });
 
 const handleParentChange = (value: string) => {
     form.parent_id = value === ROOT_VALUE ? null : value;
-};
-
-/*
-|--------------------------------------------------------------------------
-| Slug
-|--------------------------------------------------------------------------
-*/
-
-const slugifyPreview = (value: string): string => {
-    return value
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
 };
 
 const slugPreview = computed(() => {
