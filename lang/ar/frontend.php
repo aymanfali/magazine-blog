@@ -186,5 +186,12 @@ return [
     'blog' => [
         'title' => 'المدونة',
 
-    ]
+    ],
+    'messages' => [
+        'category_created'=>'تم انشاء التصنيف بنجاح',
+        'category_updated'=>'تم تعديل التصنيف بنجاح',
+        'category_deleted'=> 'تم حذف التصنيف بنجاح',
+        'category_permanently_deleted'=> 'تم حذف التصنيف نهائياً بنجاح',
+        'category_restored'=>'تم استعادة التصنيف بنجاح',
+    ],
 ];

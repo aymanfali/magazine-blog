@@ -295,21 +295,6 @@ const cancel = () => {
 
         <!-- Form Card -->
         <div class="rounded-xl border bg-card shadow-sm">
-            <div class="border-b px-6 py-5">
-                <h2 class="text-lg font-semibold">
-                    {{ t('categories.details', 'Category Details') }}
-                </h2>
-
-                <p class="mt-1 text-sm text-muted-foreground">
-                    {{
-                        t(
-                            'categories.details_description',
-                            'Configure the category information, hierarchy, image, and status.',
-                        )
-                    }}
-                </p>
-            </div>
-
             <div class="p-6">
                 <AppForm
                     :processing="form.processing"

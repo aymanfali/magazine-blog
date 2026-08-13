@@ -171,12 +171,11 @@ class CategoryController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Category created.'),
+            'message' => __('frontend.messages.category_created'),
         ]);
 
         return to_route(
-            'categories.show',
-            $category
+            'dash.categories.index',
         );
     }
 
@@ -211,7 +210,7 @@ class CategoryController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Category updated.'),
+            'message' => __('frontend.messages.category_updated'),
         ]);
 
         return to_route(
@@ -226,7 +225,7 @@ class CategoryController extends Controller
 
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => __('Category permanently deleted.'),
+                'message' => __('frontend.messages.category_permanently_deleted'),
             ]);
 
             return back();
@@ -236,7 +235,7 @@ class CategoryController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Category deleted.'),
+            'message' => __('frontend.messages.category_deleted'),
         ]);
 
         return back();
@@ -248,7 +247,7 @@ class CategoryController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Category restored.'),
+            'message' => __('frontend.messages.category_restored'),
         ]);
 
         return back();

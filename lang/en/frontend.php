@@ -182,5 +182,12 @@ return [
     'blog' => [
         'title' => 'Blog',
 
-    ]
+    ],
+    'messages' => [
+        'category_created'=>'Category Cteated Successfully',
+        'category_updated'=>'Category updated Successfully',
+        'category_deleted'=>'Category deleted Successfully',
+        'category_permanently_deleted'=>'Category permanently deleted Successfully',
+        'category_restored'=>'Category restored Successfully',
+    ],
 ];
