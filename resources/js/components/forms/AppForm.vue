@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue';
 
 import Button from '@/components/ui/button/Button.vue';
+import { Save, XOctagon } from '@lucide/vue';
 
 interface Props {
     processing?: boolean;
@@ -98,10 +99,12 @@ initializeValidity();
                     :disabled="processing"
                     @click="handleCancel"
                 >
+                    <XOctagon />
                     {{ cancelText }}
                 </Button>
 
                 <Button type="submit" :disabled="submitDisabled">
+                    <Save />
                     {{ processing ? processingText : submitText }}
                 </Button>
             </slot>

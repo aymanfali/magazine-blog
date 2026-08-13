@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
-import { Info } from '@lucide/vue';
+import { Link, useForm } from '@inertiajs/vue3';
+import { Fullscreen, Info } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 
 import AppForm from '@/components/forms/AppForm.vue';
@@ -28,6 +28,7 @@ import { useLang } from '@/composables/useLang';
 
 
 import Switch from '@/components/ui/switch/Switch.vue';
+import Button from '@/components/ui/button/Button.vue';
 
 interface ParentCategory {
     id: number | string;
@@ -179,6 +180,15 @@ const resetForm = () => {
                         )
                     }}
                 </DialogDescription>
+                <Link
+                    :href="`/${locale}/dashboard/categories/create`"
+                    rel="noopener noreferrer" class="flex justify-center"
+                >
+                    <Button variant="link" type="button">
+                        <Fullscreen />
+                        {{ t('app.view_full_page') }}
+                    </Button>
+                </Link>
             </DialogHeader>
 
             <AppForm
@@ -279,6 +289,7 @@ const resetForm = () => {
                         </SelectTrigger>
 
                         <SelectContent>
+                            <SelectItem key="main-category" value="main-category">{{ t('app.main_category') }}</SelectItem>
                             <SelectItem
                                 v-for="category in props.parentCategories"
                                 :key="category.id"

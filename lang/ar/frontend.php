@@ -52,6 +52,11 @@ return [
         'cancel' => 'إلغاء',
         'creating' => 'جارِ الإنشاء...',
         'main_category' => 'تصنيف رئيسي',
+        'view_full_page' => 'عرض في صفحة كاملة',
+        'update' => 'تعديل',
+        'updating' => 'جارِ التعديل ...',
+        'status' => 'الحالة',
+
     ],
     'language' => [
         'label' => 'اللغة',
@@ -172,6 +177,9 @@ return [
         'url_preview' => 'عرض رابط URL',
         'slug_preview_help' => 'الاسم المختصر النهائي يتم إنشاؤه والتحقق منه بواسطة الخادم.',
         'select_parent' => 'اختر التصنيف الأب',
+        'edit_title' => 'تعديل التصنيف',
+        'edit_subtitle' => 'تعديل تفاصيل التصنيف',
+        'show_subtitle' => 'عرض تفاصيل التصنيف',
 
     ],
 

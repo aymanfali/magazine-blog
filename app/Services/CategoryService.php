@@ -26,10 +26,11 @@ class CategoryService
 
             $data = $this->handleImage($data);
 
+            unset($data['remove_image']);
+
             return Category::create($data);
         });
     }
-
 
     public function update(
         Category $category,
@@ -40,27 +41,72 @@ class CategoryService
                 $data['parent_id'] ?? null,
                 $category
             );
-            
+
             $data['slug'] = $this->buildSlug(
                 $data,
                 $category
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Normalize remove_image
+            |--------------------------------------------------------------------------
+            */
+
+            $removeImage = $this->toBoolean(
+                $data['remove_image'] ?? false
+            );
+
+            unset($data['remove_image']);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Keep the old image path
+            |--------------------------------------------------------------------------
+            */
+
             $oldImage = $category->image;
 
-            $data = $this->handleImage($data);
+            /*
+            |--------------------------------------------------------------------------
+            | New image
+            |--------------------------------------------------------------------------
+            */
+
+            $hasNewImage = isset($data['image'])
+                && $data['image'] instanceof UploadedFile;
+            if ($hasNewImage) {
+                $data['image'] = $data['image']->store(
+                    'categories',
+                    'public'
+                );
+            } elseif ($removeImage) {
+                $data['image'] = null;
+            } else {
+                unset($data['image']);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update database
+            |--------------------------------------------------------------------------
+            */
 
             $category->update($data);
 
             /*
-             * Delete the old image only after the new image
-             * has been successfully stored and the model updated.
-             */
-            if (
-                isset($data['image']) &&
-                $oldImage &&
-                $oldImage !== $data['image']
-            ) {
+            |--------------------------------------------------------------------------
+            | Delete old physical image
+            |--------------------------------------------------------------------------
+            |
+            | Delete the old file when:
+            |
+            | 1. The user explicitly removed it, OR
+            | 2. The user uploaded a replacement.
+            |
+            */
+
+            if ($oldImage && ($removeImage || $hasNewImage)) {
                 $this->deleteImage($oldImage);
             }
 
@@ -95,6 +141,12 @@ class CategoryService
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Image Handling
+    |--------------------------------------------------------------------------
+    */
+
     protected function handleImage(array $data): array
     {
         if (
@@ -114,10 +166,66 @@ class CategoryService
         return $data;
     }
 
-    protected function deleteImage(string $path): void
+    protected function deleteImage(?string $path): void
     {
-        Storage::disk('public')->delete($path);
+        if (! $path) {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normalize path
+        |--------------------------------------------------------------------------
+        |
+        | Database should normally contain:
+        |
+        | categories/example.jpg
+        |
+        | But this also protects against values such as:
+        |
+        | /storage/categories/example.jpg
+        | storage/categories/example.jpg
+        |
+        */
+
+        $path = ltrim($path, '/');
+
+        if (Str::startsWith($path, 'storage/')) {
+            $path = Str::after($path, 'storage/');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete
+        |--------------------------------------------------------------------------
+        */
+
+        $disk = Storage::disk('public');
+
+        if ($disk->exists($path)) {
+            $disk->delete($path);
+        }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Boolean Normalization
+    |--------------------------------------------------------------------------
+    */
+
+    protected function toBoolean(mixed $value): bool
+    {
+        return filter_var(
+            $value,
+            FILTER_VALIDATE_BOOLEAN
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Slug
+    |--------------------------------------------------------------------------
+    */
 
     protected function buildSlug(
         array $data,
@@ -148,6 +256,12 @@ class CategoryService
         return $slug;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Parent Validation
+    |--------------------------------------------------------------------------
+    */
+
     protected function validateParent(
         ?string $parentId,
         ?Category $category = null
@@ -160,13 +274,18 @@ class CategoryService
 
         if (! $parent) {
             throw ValidationException::withMessages([
-                'parent_id' => __('The selected parent category is invalid.'),
+                'parent_id' => __(
+                    'The selected parent category is invalid.'
+                ),
             ]);
         }
 
         /*
-         * A category cannot be its own parent.
-         */
+        |--------------------------------------------------------------------------
+        | Self-parent
+        |--------------------------------------------------------------------------
+        */
+
         if (
             $category &&
             $parent->is($category)
@@ -179,17 +298,11 @@ class CategoryService
         }
 
         /*
-         * A category cannot use one of its descendants
-         * as its parent.
-         *
-         * Example:
-         *
-         * X
-         * └── Y
-         *     └── Z
-         *
-         * X cannot have Y or Z as parent.
-         */
+        |--------------------------------------------------------------------------
+        | Descendant-parent
+        |--------------------------------------------------------------------------
+        */
+
         if (
             $category &&
             $this->isDescendantOf(
@@ -205,9 +318,6 @@ class CategoryService
         }
     }
 
-    /**
-     * Determine whether $category is a descendant of $ancestor.
-     */
     protected function isDescendantOf(
         Category $category,
         Category $ancestor
@@ -215,18 +325,12 @@ class CategoryService
         $visited = [];
 
         while ($category->parent_id !== null) {
-            /*
-             * Safety guard against already-corrupted data.
-             */
             if (isset($visited[$category->getKey()])) {
                 return false;
             }
 
             $visited[$category->getKey()] = true;
 
-            /*
-             * We reached the category being updated.
-             */
             if (
                 (string) $category->parent_id ===
                 (string) $ancestor->getKey()

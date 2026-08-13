@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Head, router, setLayoutProps } from '@inertiajs/vue3';
-import { CheckCircle, CircleX, Edit2, RotateCcw, Trash2 } from '@lucide/vue';
+import {
+    CheckCircle,
+    CircleX,
+    Edit2,
+    Eye,
+    PlusCircle,
+    RotateCcw,
+    Trash2,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 
 import AdminTable from '@/components/tables/AdminTable.vue';
@@ -10,10 +18,33 @@ import { useLang } from '@/composables/useLang';
 import { dashboard } from '@/routes';
 
 import CreateCategoryDialog from './CreateCategoryDialog.vue';
+import EditCategoryDialog from './EditCategoryDialog.vue';
+import ShowCategoryDialog from './ShowCategoryDialog.vue';
+
+/*
+|--------------------------------------------------------------------------
+| Types
+|--------------------------------------------------------------------------
+*/
 
 interface ParentCategory {
     id: string;
     name: string;
+}
+
+interface Category {
+    id: string;
+    name: string;
+    slug: string | null;
+    description: string | null;
+    image: string | null;
+    image_url?: string | null;
+    is_active: boolean;
+    parent_id: string | null;
+    parent?: {
+        id: string;
+        name: string;
+    } | null;
 }
 
 interface Props {
@@ -62,11 +93,63 @@ setLayoutProps({
 
 /*
 |--------------------------------------------------------------------------
-| Create Category
+| Create / Show / Edit Dialogs
 |--------------------------------------------------------------------------
 */
 
 const showCreateModal = ref(false);
+const showShowModal = ref(false);
+const showEditModal = ref(false);
+
+const selectedCategory = ref<Category | null>(null);
+
+/*
+|--------------------------------------------------------------------------
+| Create Dialog
+|--------------------------------------------------------------------------
+*/
+
+const openCreateModal = () => {
+    showCreateModal.value = true;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Show Dialog
+|--------------------------------------------------------------------------
+*/
+
+const openShowModal = (category: Category) => {
+    selectedCategory.value = category;
+    showShowModal.value = true;
+};
+
+const handleShowModalChange = (value: boolean) => {
+    showShowModal.value = value;
+
+    if (!value) {
+        selectedCategory.value = null;
+    }
+};
+
+/*
+|--------------------------------------------------------------------------
+| Edit Dialog
+|--------------------------------------------------------------------------
+*/
+
+const openEditModal = (category: Category) => {
+    selectedCategory.value = category;
+    showEditModal.value = true;
+};
+
+const handleEditModalChange = (value: boolean) => {
+    showEditModal.value = value;
+
+    if (!value) {
+        selectedCategory.value = null;
+    }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +186,7 @@ const columns = computed(() => [
         filterKey: 'name',
         searchable: true,
     },
+
     {
         key: 'parent_name',
         label: t('categories.parent_category', 'Parent'),
@@ -172,6 +256,25 @@ const columns = computed(() => [
 
 const actions = computed(() => [
     /*
+     * Show
+     */
+    {
+        key: 'show',
+
+        label: t('app.show', 'Show'),
+
+        icon: Eye,
+
+        variant: 'default',
+
+        visible: (item: any) => !item.deleted_at,
+
+        handler: ({ item }: any) => {
+            openShowModal(item);
+        },
+    },
+
+    /*
      * Edit
      */
     {
@@ -186,7 +289,7 @@ const actions = computed(() => [
         visible: (item: any) => !item.deleted_at,
 
         handler: ({ item }: any) => {
-            router.visit(withLocale(`/dashboard/categories/${item.id}/edit`));
+            openEditModal(item);
         },
     },
 
@@ -257,31 +360,16 @@ const actions = computed(() => [
 const handleDelete = ({ item, force }: { item: any; force: boolean }) => {
     const basePath = `/dashboard/categories/${item.id}`;
 
-    /*
-     * If the category is already trashed, or the table
-     * explicitly requested force deletion, permanently delete it.
-     */
     if (force || item.deleted_at) {
         router.delete(withLocale(`${basePath}?force=1`), {
             preserveScroll: true,
-
-            onSuccess: () => {
-                // Optional: AdminTable/Inertia will refresh the data.
-            },
         });
 
         return;
     }
 
-    /*
-     * Normal deletion = soft delete.
-     */
     router.delete(withLocale(basePath), {
         preserveScroll: true,
-
-        onSuccess: () => {
-            // Optional: AdminTable/Inertia will refresh the data.
-        },
     });
 };
 
@@ -313,7 +401,8 @@ const handleRestore = (item: any) => {
                 {{ t('categories.title', 'Categories') }}
             </h1>
 
-            <Button type="button" @click="showCreateModal = true">
+            <Button type="button" @click="openCreateModal">
+                <PlusCircle />
                 {{ t('app.create', 'Create') }}
             </Button>
         </div>
@@ -336,6 +425,22 @@ const handleRestore = (item: any) => {
             v-model:open="showCreateModal"
             :parent-categories="props.parentCategories ?? []"
             :endpoint="withLocale('/dashboard/categories')"
+        />
+
+        <!-- Show Category Dialog -->
+        <ShowCategoryDialog
+            :open="showShowModal"
+            :category="selectedCategory"
+            @update:open="handleShowModalChange"
+        />
+
+        <!-- Edit Category Dialog -->
+        <EditCategoryDialog
+            :open="showEditModal"
+            :category="selectedCategory"
+            :parent-categories="props.parentCategories ?? []"
+            :endpoint="withLocale('/dashboard/categories')"
+            @update:open="handleEditModalChange"
         />
     </div>
 </template>

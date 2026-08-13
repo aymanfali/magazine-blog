@@ -54,6 +54,11 @@ class CategoryRequest extends FormRequest
                 'max:5120',
             ],
 
+            'remove_image' => [
+                'sometimes',
+                'boolean',
+            ],
+
             'is_active' => [
                 'sometimes',
                 'boolean',

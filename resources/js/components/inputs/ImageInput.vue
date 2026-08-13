@@ -8,8 +8,23 @@ import { Button } from '@/components/ui/button';
 import { useLang } from '@/composables/useLang.js';
 import { cn } from '@/lib/utils';
 
+/*
+|--------------------------------------------------------------------------
+| Types
+|--------------------------------------------------------------------------
+*/
+
 interface Props {
     modelValue: File | null;
+
+    /**
+     * Existing image URL from the server.
+     *
+     * Example:
+     * /storage/categories/abc.jpg
+     */
+    existingImage?: string | null;
+
     label?: string;
     error?: string;
     id?: string;
@@ -20,6 +35,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    existingImage: null,
+
     label: '',
     error: '',
     id: undefined,
@@ -33,6 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     'update:modelValue': [value: File | null];
+    'remove-existing': [];
 }>();
 
 const { t } = useLang();
@@ -52,6 +70,11 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const previewUrl = ref<string | null>(null);
 
 const localError = ref<string | null>(null);
+
+/**
+ * Whether the existing server image has been explicitly removed.
+ */
+const existingImageRemoved = ref(false);
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +100,9 @@ const acceptedTypes = computed(() =>
 |--------------------------------------------------------------------------
 */
 
+/**
+ * Create preview from newly selected file.
+ */
 const createPreview = (file: File | null) => {
     if (!file) {
         previewUrl.value = null;
@@ -93,13 +119,53 @@ const createPreview = (file: File | null) => {
     reader.readAsDataURL(file);
 };
 
+/**
+ * Update preview whenever a new file is selected.
+ */
 watch(
     () => props.modelValue,
     (file) => {
-        createPreview(file);
+        if (file) {
+            existingImageRemoved.value = false;
+
+            createPreview(file);
+
+            return;
+        }
+
+        /*
+         * No new file.
+         *
+         * Show existing server image unless the user
+         * explicitly removed it.
+         */
+        if (props.existingImage && !existingImageRemoved.value) {
+            previewUrl.value = props.existingImage;
+
+            return;
+        }
+
+        previewUrl.value = null;
     },
     {
         immediate: true,
+    },
+);
+
+/**
+ * Update preview when the existing image changes.
+ *
+ * This is important when the user opens the dialog
+ * for different categories without destroying the component.
+ */
+watch(
+    () => props.existingImage,
+    (image) => {
+        if (props.modelValue) {
+            return;
+        }
+
+        previewUrl.value = image ?? null;
     },
 );
 
@@ -179,14 +245,15 @@ const handleFileChange = (event: Event) => {
     if (!validateFile(file)) {
         emit('update:modelValue', null);
 
-        /*
-         * Reset the native input so the user can select
-         * the same file again after a validation failure.
-         */
         input.value = '';
 
         return;
     }
+
+    /*
+     * A new image replaces the existing preview.
+     */
+    existingImageRemoved.value = false;
 
     emit('update:modelValue', file);
 };
@@ -198,13 +265,34 @@ const handleFileChange = (event: Event) => {
 */
 
 const removeImage = () => {
-    emit('update:modelValue', null);
-
     localError.value = null;
 
     /*
-     * Reset the native input so the same file can be
-     * selected again.
+     * If a new file is currently selected,
+     * simply remove the new file and restore
+     * the existing image.
+     */
+    if (props.modelValue) {
+        emit('update:modelValue', null);
+
+        if (props.existingImage && !existingImageRemoved.value) {
+            previewUrl.value = props.existingImage;
+        } else {
+            previewUrl.value = null;
+        }
+    } else {
+        /*
+         * Existing server image is being removed.
+         */
+        existingImageRemoved.value = true;
+
+        previewUrl.value = null;
+
+        emit('remove-existing');
+    }
+
+    /*
+     * Reset native input.
      */
     if (fileInput.value) {
         fileInput.value.value = '';

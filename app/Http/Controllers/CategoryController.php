@@ -143,6 +143,25 @@ class CategoryController extends Controller
         ]);
     }
 
+    public function create(Category $category)
+    {
+        $category->load([
+            'parent',
+            'children',
+        ]);
+
+        $parentCategories = Category::query()
+            ->whereHas('children')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('categories/Create', [
+            'category' => $category,
+            'parentCategories' => $parentCategories,
+        ]);
+    }
+
     public function store(CategoryRequest $request): RedirectResponse
     {
         $category = $this->categoryService->create(
@@ -161,6 +180,26 @@ class CategoryController extends Controller
         );
     }
 
+    public function edit(Category $category)
+    {
+
+        $category->load([
+            'parent',
+            'children',
+        ]);
+
+        $parentCategories = Category::query()
+            ->whereHas('children')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('categories/Edit', [
+            'category' => $category,
+            'parentCategories' => $parentCategories,
+        ]);
+    }
+
     public function update(
         CategoryRequest $request,
         Category $category
@@ -176,8 +215,7 @@ class CategoryController extends Controller
         ]);
 
         return to_route(
-            'categories.show',
-            $category
+            'dash.categories.index',
         );
     }
 

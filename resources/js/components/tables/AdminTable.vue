@@ -743,8 +743,8 @@ function resolveValue(item: any, col: any) {
                 </Select>
             </div>
 
-            <div class="flex gap-2 items-center">
-                <Search/>
+            <div class="flex items-center gap-2">
+                <Search />
                 <Input
                     v-model="search"
                     type="text"
@@ -965,7 +965,15 @@ function resolveValue(item: any, col: any) {
                             }}
                         </TableCell>
                     </TableRow>
-                    <TableRow v-for="item in rows" :key="item.id">
+                    <TableRow
+                        v-for="item in rows"
+                        :key="item.id"
+                        :class="[
+                            item.deleted_at
+                                ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/50'
+                                : '',
+                        ]"
+                    >
                         <TableCell v-for="col in columns" :key="col.key">
                             <slot :name="`cell-${col.key}`" :item="item">
                                 <template v-if="col.type === 'image'">
