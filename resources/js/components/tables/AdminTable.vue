@@ -712,30 +712,37 @@ function resolveValue(item: any, col: any) {
     <div
         class="dark:border-dark-border dark:bg-dark-secondary m-2 w-full overflow-hidden rounded-2xl border shadow-md"
     >
-        <div class="my-4 flex items-center justify-between px-4">
-            <div class="flex items-center gap-2">
-                <Eye />
+        <div
+            class="my-4 flex flex-col gap-4 rounded-lg p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between lg:flex-nowrap"
+        >
+            <!-- Trash filter -->
+            <div class="flex w-full items-center gap-2 sm:w-auto">
+                <Eye class="size-4 shrink-0" />
+
                 <Select
                     v-if="enableSoftDeletes"
                     :model-value="trashedState"
                     @update:model-value="changeTrashedState"
                 >
-                    <SelectTrigger class="h-9 w-36 text-xs">
+                    <SelectTrigger class="h-9 w-full text-xs sm:w-36">
                         <SelectValue
                             :placeholder="
                                 t('app.trashed_filter', 'Status / Trash')
                             "
                         />
                     </SelectTrigger>
+
                     <SelectContent>
                         <SelectItem value="without">
                             {{ t('app.without_trashed', 'Active Items') }}
                         </SelectItem>
+
                         <SelectItem value="only">
-                            <span class="text-red-500">{{
-                                t('app.only_trashed', 'Only Trashed')
-                            }}</span>
+                            <span class="text-red-500">
+                                {{ t('app.only_trashed', 'Only Trashed') }}
+                            </span>
                         </SelectItem>
+
                         <SelectItem value="with">
                             {{ t('app.with_trashed', 'With Trashed') }}
                         </SelectItem>
@@ -743,29 +750,40 @@ function resolveValue(item: any, col: any) {
                 </Select>
             </div>
 
-            <div class="flex items-center gap-2">
-                <Search />
+            <!-- Search -->
+            <div
+                class="flex w-full min-w-0 items-center gap-2 sm:flex-1 lg:max-w-md"
+            >
+                <Search class="size-4 shrink-0" />
+
                 <Input
                     v-model="search"
                     type="text"
                     :placeholder="t('app.search', 'Search...')"
-                    :class="[
-                        'rounded-lg border bg-accent px-3 py-1 text-sm outline-none',
-                    ]"
+                    class="min-w-0 flex-1 rounded-lg border bg-accent px-3 py-1 text-sm outline-none"
                 />
-                <Button variant="ghost" @click="resetFilters">
-                    <RotateCcw />
+
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    class="shrink-0"
+                    @click="resetFilters"
+                >
+                    <RotateCcw class="size-4" />
                 </Button>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Per page + pagination info -->
+            <div
+                class="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-end"
+            >
                 <!-- Rows per page -->
                 <div class="flex items-center gap-2">
                     <Select
                         v-model="perPage"
                         @update:model-value="changePerPage"
                     >
-                        <SelectTrigger class="w-25">
+                        <SelectTrigger class="h-9 w-20">
                             <SelectValue
                                 :placeholder="t('app.choose', 'Choose')"
                             />
@@ -783,20 +801,30 @@ function resolveValue(item: any, col: any) {
                     </Select>
                 </div>
 
-                <div class="text-sm text-gray-500">
-                    {{ t('app.showing') }}
-                    {{
-                        (paginationMeta.current_page - 1) *
-                            paginationMeta.per_page +
-                        1
-                    }}–{{
-                        Math.min(
-                            paginationMeta.current_page *
-                                paginationMeta.per_page,
-                            paginationMeta.total,
-                        )
-                    }}
-                    {{ t('app.of') }} {{ paginationMeta.total }}
+                <!-- Showing -->
+                <div
+                    class="text-right text-xs whitespace-nowrap text-muted-foreground sm:text-sm"
+                >
+                    <template v-if="paginationMeta.total > 0">
+                        {{ t('app.showing') }}
+                        {{
+                            (paginationMeta.current_page - 1) *
+                                paginationMeta.per_page +
+                            1
+                        }}–{{
+                            Math.min(
+                                paginationMeta.current_page *
+                                    paginationMeta.per_page,
+                                paginationMeta.total,
+                            )
+                        }}
+                        {{ t('app.of') }}
+                        {{ paginationMeta.total }}
+                    </template>
+
+                    <template v-else>
+                        {{ t('app.no_results', 'No results') }}
+                    </template>
                 </div>
             </div>
         </div>

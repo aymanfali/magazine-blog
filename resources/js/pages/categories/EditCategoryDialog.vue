@@ -394,7 +394,7 @@ const resetForm = () => {
                     {{ dialogDescription }}
                 </DialogDescription>
                 <Link
-                    :href="`/${locale}/dashboard/categories/edit/${props.category?.id ?? ''}`"
+                    :href="`/${locale}/dashboard/categories/${props.category?.id ?? ''}/edit`"
                     rel="noopener noreferrer" class="flex justify-center"
                 >
                     <Button variant="link" type="button">

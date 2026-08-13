@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, setLayoutProps, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Info } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
@@ -22,6 +22,8 @@ import Switch from '@/components/ui/switch/Switch.vue';
 import Button from '@/components/ui/button/Button.vue';
 
 import { useLang } from '@/composables/useLang';
+import { dashboard } from '@/routes';
+import { withLocale } from '@/utils';
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +69,24 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t, locale } = useLang();
+
+
+setLayoutProps({
+    breadcrumbs: [
+        {
+            title: t('dashboard.title', 'Dashboard'),
+            href: dashboard(),
+        },
+        {
+            title: t('categories.title', 'Categories'),
+            href: withLocale('/dashboard/categories'),
+        },
+        {
+            title: props.category?.name,
+            href: '',
+        },
+    ],
+});
 
 /*
 |--------------------------------------------------------------------------

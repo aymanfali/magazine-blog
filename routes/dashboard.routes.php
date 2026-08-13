@@ -5,27 +5,22 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])
     ->prefix('dashboard')
+    ->name('dash.')
     ->group(function () {
-        Route::get('/categories', [CategoryController::class, 'index'])->name('dash.categories.index');
-
-        Route::get('/categories/create', [CategoryController::class, 'create'])
-            ->name('dash.categories.create');
-
-        Route::post('/categories', [CategoryController::class, 'store'])
-            ->name('dash.categories.store');
-
-        Route::get('/categories/{category}', [CategoryController::class, 'show'])
-            ->name('dash.categories.show');
-
-        Route::get('/categories/edit/{category}', [CategoryController::class, 'edit'])
-            ->name('dash.categories.edit');
-
-        Route::put('/categories/{category}', [CategoryController::class, 'update'])
-            ->name('dash.categories.update');
-
-        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
-            ->withTrashed()->name('dash.categories.destroy');
-
-        Route::post('/categories/{category}/restore', [CategoryController::class, 'restore'])
-            ->withTrashed()->name('dash.categories.restore');
+    Route::prefix('categories')
+        ->name('categories.')
+        ->group(function () {
+            Route::get('/', [CategoryController::class, 'index'])->name('index');
+            Route::get('/create', [CategoryController::class, 'create'])->name('create');
+            Route::post('/', [CategoryController::class, 'store'])->name('store');
+            Route::get('/{category}', [CategoryController::class, 'show'])->name('show');
+            Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+            Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [CategoryController::class, 'destroy'])
+                ->withTrashed()
+                ->name('destroy');
+            Route::post('/{category}/restore', [CategoryController::class, 'restore'])
+                ->withTrashed()
+                ->name('restore');
+        });
     });

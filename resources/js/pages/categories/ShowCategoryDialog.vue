@@ -230,7 +230,7 @@ const closeModal = () => {
                     </Button>
 
                     <Link
-                        :href="`/${locale}/dashboard/categories/edit/${category.id}`"
+                        :href="`/${locale}/dashboard/categories/${category.id}/edit`"
                     >
                         <Button type="button">
                             <Edit class="mr-2 h-4 w-4" />
